@@ -9,9 +9,23 @@ workflows:
     scripts:
       - name: Build unsigned IPA
         script: |
-          xcode-project build-ipa \
-            --project "CashTracker.xcodeproj" \
-            --scheme "CashTracker" \
-            --archive-flags "-destination 'generic/platform=iOS'"
+          set -ex
+          xcodebuild -project "CashTracker.xcodeproj" \
+            -scheme "CashTracker" \
+            -sdk iphoneos \
+            -configuration Release \
+            -archivePath "$HOME/CashTracker.xcarchive" \
+            clean archive \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES
+          APP_PATH=$(echo $HOME/CashTracker.xcarchive/Products/Applications/*.app | head -n 1)
+          echo "App: $APP_PATH"
+          ls -la "$APP_PATH"
+          rm -rf Payload build/ios/ipa
+          mkdir -p Payload build/ios/ipa
+          cp -R "$APP_PATH" Payload/
+          zip -r build/ios/ipa/CashTracker-unsigned.ipa Payload
     artifacts:
       - build/ios/ipa/*.ipa
